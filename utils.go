@@ -33,6 +33,22 @@ type Coords struct {
 	Y int64
 }
 
+// Bounds are rect bounds
+type Bounds struct {
+	p1 Coords
+	p2 Coords
+}
+
+// PixelRect will return the pixel rect
+func (b *Bounds) PixelRect() pixel.Rect {
+	p1v := b.p1.Vec()
+	p2v := b.p2.Vec()
+	return pixel.R(
+		p1v.X, p1v.Y,
+		p2v.X, p2v.Y,
+	)
+}
+
 // Vec will return a Vec representation of a Coord
 func (c *Coords) Vec() pixel.Vec {
 	return pixel.V(float64(c.X), float64(c.Y))

@@ -20,6 +20,8 @@ const (
 var (
 	// NilColor represents a nil color value
 	NilColor = color.RGBA{255, 105, 180, 1}
+	// TransparentColor represents a transparent color
+	TransparentColor = color.RGBA{0, 0, 0, 0}
 )
 
 var (
@@ -40,6 +42,8 @@ func New(title string, rects Rects, bg color.Color) *Blueprint {
 
 // Blueprint manages an application GUI
 type Blueprint struct {
+	mux atoms.RWMux
+
 	title string
 	rects Rects
 
@@ -67,7 +71,10 @@ func (b *Blueprint) render() {
 
 // Push will push a widget onto the Blueprint
 func (b *Blueprint) Push(w Widget) {
-	b.ws = append(b.ws, w)
+	b.mux.Update(func() {
+		b.ws = append(b.ws, w)
+		b.setUpdate()
+	})
 }
 
 // Run will begin the render loop, function will end when window or the instance of blueprint has been closed
@@ -86,7 +93,7 @@ func (b *Blueprint) Run() (err error) {
 			}
 
 			if b.update.Set(false) {
-				b.render()
+				b.mux.Update(b.render)
 			}
 
 			b.win.Update()
@@ -114,6 +121,14 @@ func setUpdate() {
 	}
 
 	_b.setUpdate()
+}
+
+func windowWidth() int64 {
+	if _b == nil {
+		return 0
+	}
+
+	return _b.rects.Width
 }
 
 func windowHeight() int64 {

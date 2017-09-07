@@ -1,7 +1,7 @@
 package blueprint
 
 import (
-	"github.com/faiface/pixel/pixelgl"
+	"github.com/faiface/pixel"
 )
 
 // Widget is a widget interface
@@ -10,5 +10,5 @@ type Widget interface {
 	Rects() Rects
 	Padding() Padding
 	Margin() Margin
-	Draw(win *pixelgl.Window)
+	Draw(pixel.Target)
 }

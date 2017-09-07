@@ -1,7 +1,7 @@
 package blueprint
 
 import (
-	"github.com/faiface/pixel/imdraw"
+	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/missionMeteora/journaler"
 )
@@ -9,13 +9,14 @@ import (
 // NewContainer will return a new container
 func NewContainer(style Style, coords Coords) *Container {
 	var c Container
-	c.d = imdraw.New(nil)
+	b := Bounds{
+		p1: Coords{0, 0},
+		p2: Coords{style.r.Width, style.r.Height},
+	}
+
+	c.c = pixelgl.NewCanvas(b.PixelRect())
 	c.s = style
 	c.s.c = coords
-	journaler.Debug("New container..: %v %v", _b, c.s.bg)
-	if c.s.bg != NilColor {
-		c.drawRect()
-	}
 
 	setUpdate()
 	return &c
@@ -23,28 +24,11 @@ func NewContainer(style Style, coords Coords) *Container {
 
 // Container is a standard content container
 type Container struct {
-	// Rectangle renderer
-	d *imdraw.IMDraw
+	c *pixelgl.Canvas
 	// Container style
 	s Style
 	// Child widgets
 	ws []Widget
-}
-
-func (c *Container) drawRect() {
-	var p1, p2 Coords
-	// Set point 1
-	p1.X = c.s.c.X
-	p1.Y = windowHeight() - c.s.c.Y
-	// Set point 2
-	p2.X = c.s.c.X + c.s.r.Width
-	p2.Y = windowHeight() - (c.s.c.Y + c.s.r.Height)
-	// Sec rectange color
-	c.d.Color = c.s.bg
-	// Push the first point
-	c.d.Push(p1.Vec())
-	c.d.Push(p2.Vec())
-	c.d.Rectangle(0)
 }
 
 // Coords will return the container coords
@@ -68,13 +52,22 @@ func (c *Container) Margin() Margin {
 }
 
 // Draw will draw the contents
-func (c *Container) Draw(win *pixelgl.Window) {
-	// Draw container
-	c.d.Draw(win)
+func (c *Container) Draw(tgt pixel.Target) {
+	// Clear as background color
+	c.c.Clear(c.s.bg)
+
 	// Iterate through Widgets
 	for _, w := range c.ws {
-		w.Draw(win)
+		w.Draw(c.c)
 	}
+
+	topleft := Coords{
+		X: (c.s.r.Width / 2) + c.s.c.X,
+		Y: windowHeight() - ((c.s.r.Height / 2) + c.s.c.Y),
+	}
+
+	journaler.Debug("topleft? %v %v %v", topleft, c.s.r.Width, c.s.c.X)
+	c.c.Draw(tgt, pixel.IM.Moved(topleft.Vec()))
 }
 
 // Push will push a widget into the container
@@ -85,7 +78,6 @@ func (c *Container) Push(w Widget) {
 
 // Dot will return the next dot
 func (c *Container) Dot() (dot Coords) {
-	dot = c.Coords()
 	dot.X += c.s.p.Left
 	dot.Y += c.s.p.Top
 
@@ -93,5 +85,7 @@ func (c *Container) Dot() (dot Coords) {
 		dot.Y += w.Rects().Height
 	}
 
+	dot.Y = windowHeight() - ((c.s.r.Height / 2) + c.s.c.Y)
+	dot.Y = 180
 	return
 }

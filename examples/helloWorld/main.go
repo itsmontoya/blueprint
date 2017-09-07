@@ -55,26 +55,38 @@ func main() {
 		os.Exit(1)
 	}
 
-	c = blueprint.NewContainer(s1, blueprint.Coords{X: 12, Y: 12})
-	b.Push(c)
-
-	c = blueprint.NewContainer(s2, blueprint.Coords{X: 24, Y: 24})
-	b.Push(c)
-
-	c = blueprint.NewContainer(s1, blueprint.Coords{X: 36, Y: 36})
-	b.Push(c)
-
-	c = blueprint.NewContainer(s2, blueprint.Coords{X: 48, Y: 48})
-	b.Push(c)
-
 	go func() {
-		time.Sleep(time.Second)
+		time.Sleep(time.Millisecond * 100)
+
+		c = blueprint.NewContainer(s1, blueprint.Coords{X: 0, Y: 0})
+		b.Push(c)
+
+		//
 		c.Push(blueprint.NewContainer(s3, c.Dot()))
-		time.Sleep(time.Second)
+		//c.Push(blueprint.NewContainer(s4, c.Dot()))
+		//c.Push(blueprint.NewContainer(s5, c.Dot()))
+		//c.Push(blueprint.NewContainer(s3, c.Dot()))
+
+		//
+
+		return
+
+		c = blueprint.NewContainer(s2, blueprint.Coords{X: 24, Y: 24})
+		b.Push(c)
+
+		c = blueprint.NewContainer(s1, blueprint.Coords{X: 36, Y: 36})
+		b.Push(c)
+
+		c = blueprint.NewContainer(s2, blueprint.Coords{X: 48, Y: 48})
+		b.Push(c)
+
+		return
+		c.Push(blueprint.NewContainer(s3, c.Dot()))
 		c.Push(blueprint.NewContainer(s4, c.Dot()))
-		time.Sleep(time.Second)
 		c.Push(blueprint.NewContainer(s5, c.Dot()))
+		c.Push(blueprint.NewContainer(s3, c.Dot()))
 	}()
+
 	if err = b.Run(); err != nil {
 		journaler.Error("Error initializing blueprint: %v", err)
 		os.Exit(1)
