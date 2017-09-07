@@ -1,7 +1,6 @@
 package blueprint
 
 import (
-	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/missionMeteora/journaler"
@@ -85,14 +84,14 @@ func (c *Container) Push(w Widget) {
 }
 
 // Dot will return the next dot
-func (c *Container) Dot() pixel.Vec {
-	cc := c.Coords()
-	cc.X += c.s.p.Left
-	cc.Y += c.s.p.Top
+func (c *Container) Dot() (dot Coords) {
+	dot = c.Coords()
+	dot.X += c.s.p.Left
+	dot.Y += c.s.p.Top
 
 	for _, w := range c.ws {
-		cc.Y += w.Rects().Height
+		dot.Y += w.Rects().Height
 	}
 
-	return cc.Vec()
+	return
 }
