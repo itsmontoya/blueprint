@@ -78,14 +78,15 @@ func (b *Blueprint) Push(w Widget) {
 }
 
 // Run will begin the render loop, function will end when window or the instance of blueprint has been closed
-func (b *Blueprint) Run() (err error) {
-	journaler.Debug("Running: %v", b)
+func (b *Blueprint) Run(fn func()) (err error) {
 	b.wg.Add(1)
 
 	pixelgl.Run(func() {
 		if b.win, err = pixelgl.NewWindow(getCfg(b.title, b.rects.Width, b.rects.Height)); err != nil {
 			return
 		}
+
+		go fn()
 
 		for !b.win.Closed() {
 			if b.win.JustPressed(pixelgl.MouseButton1) {
