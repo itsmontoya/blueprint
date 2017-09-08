@@ -3,7 +3,6 @@ package blueprint
 import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"github.com/missionMeteora/journaler"
 )
 
 // NewContainer will return a new container
@@ -66,7 +65,6 @@ func (c *Container) Draw(tgt pixel.Target) {
 		Y: windowHeight() - ((c.s.r.Height / 2) + c.s.c.Y),
 	}
 
-	journaler.Debug("topleft? %v %v %v", topleft, c.s.r.Width, c.s.c.X)
 	c.c.Draw(tgt, pixel.IM.Moved(topleft.Vec()))
 }
 
@@ -79,13 +77,12 @@ func (c *Container) Push(w Widget) {
 // Dot will return the next dot
 func (c *Container) Dot() (dot Coords) {
 	dot.X += c.s.p.Left
+	dot.Y += windowHeight() - c.s.r.Height
 	dot.Y += c.s.p.Top
 
 	for _, w := range c.ws {
 		dot.Y += w.Rects().Height
 	}
 
-	dot.Y = windowHeight() - ((c.s.r.Height / 2) + c.s.c.Y)
-	dot.Y = 180
 	return
 }
