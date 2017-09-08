@@ -5,12 +5,7 @@ import (
 )
 
 // NewStyle will return a new element Style
-func NewStyle(r Rects, p Padding, m Margin, bg, fg color.Color) (s Style, err error) {
-	if r.Width < p.Left+p.Right || r.Height < p.Top+p.Bottom {
-		err = ErrPaddingExceedsRects
-		return
-	}
-
+func NewStyle(r Rects, p Padding, m Margin, bg, fg color.Color) (s Style) {
 	s.r = r
 	s.p = p
 	s.bg = bg
@@ -57,4 +52,13 @@ func (s *Style) Background() color.Color {
 // Foreground will return the foreground for this style
 func (s *Style) Foreground() color.Color {
 	return s.fg
+}
+
+// Validate will validate a style
+func (s *Style) Validate() (err error) {
+	if s.r.Width < s.p.Left+s.p.Right || s.r.Height < s.p.Top+s.p.Bottom {
+		return ErrPaddingExceedsRects
+	}
+
+	return
 }

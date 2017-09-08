@@ -3,7 +3,6 @@ package main
 import (
 	"image/color"
 	"os"
-	"time"
 
 	"github.com/itsmontoya/blueprint"
 	"github.com/missionMeteora/journaler"
@@ -17,78 +16,69 @@ var (
 	whiteC = color.RGBA{255, 255, 255, 255}
 )
 
+var (
+	r  = blueprint.Rects{Width: 300, Height: 300}
+	r2 = blueprint.Rects{Width: 96, Height: 96}
+)
+
+var (
+	s1 = blueprint.NewStyle(r, blueprint.Padding{}, blueprint.Margin{}, blackC, whiteC)
+	s2 = blueprint.NewStyle(r, blueprint.Padding{}, blueprint.Margin{}, whiteC, blackC)
+	s3 = blueprint.NewStyle(r2, blueprint.Padding{}, blueprint.Margin{}, redC, whiteC)
+	s4 = blueprint.NewStyle(r2, blueprint.Padding{}, blueprint.Margin{}, greenC, blackC)
+	s5 = blueprint.NewStyle(r2, blueprint.Padding{}, blueprint.Margin{}, blueC, blackC)
+)
+
+var (
+	fontRegular *blueprint.Font
+)
+
 func main() {
 	var (
-		b  = blueprint.New("Test app", blueprint.Rects{Width: 640, Height: 480}, blueprint.NilColor)
-		r  = blueprint.Rects{Width: 300, Height: 300}
-		r2 = blueprint.Rects{Width: 100, Height: 100}
-
-		c *blueprint.Container
-
-		s1, s2, s3, s4, s5 blueprint.Style
-
+		a   App
 		err error
 	)
 
-	if s1, err = blueprint.NewStyle(r, blueprint.Padding{}, blueprint.Margin{}, blackC, whiteC); err != nil {
-		journaler.Error("Error getting new style: %v", err)
+	if fontRegular, err = blueprint.NewFont("./assets/fonts/RobotoCondensed-Regular.ttf", 24); err != nil {
+		journaler.Error("Error loading font: %v", err)
 		os.Exit(1)
 	}
 
-	if s2, err = blueprint.NewStyle(r, blueprint.Padding{}, blueprint.Margin{}, whiteC, blackC); err != nil {
-		journaler.Error("Error getting new style: %v", err)
-		os.Exit(1)
-	}
-
-	if s3, err = blueprint.NewStyle(r2, blueprint.Padding{}, blueprint.Margin{}, redC, whiteC); err != nil {
-		journaler.Error("Error getting new style: %v", err)
-		os.Exit(1)
-	}
-
-	if s4, err = blueprint.NewStyle(r2, blueprint.Padding{}, blueprint.Margin{}, greenC, blackC); err != nil {
-		journaler.Error("Error getting new style: %v", err)
-		os.Exit(1)
-	}
-
-	if s5, err = blueprint.NewStyle(r2, blueprint.Padding{}, blueprint.Margin{}, blueC, blackC); err != nil {
-		journaler.Error("Error getting new style: %v", err)
-		os.Exit(1)
-	}
-
-	go func() {
-		time.Sleep(time.Millisecond * 100)
-
-		c = blueprint.NewContainer(s1, blueprint.Coords{X: 0, Y: 0})
-		b.Push(c)
-
-		//
-		c.Push(blueprint.NewContainer(s3, c.Dot()))
-		//c.Push(blueprint.NewContainer(s4, c.Dot()))
-		//c.Push(blueprint.NewContainer(s5, c.Dot()))
-		//c.Push(blueprint.NewContainer(s3, c.Dot()))
-
-		//
-
-		return
-
-		c = blueprint.NewContainer(s2, blueprint.Coords{X: 24, Y: 24})
-		b.Push(c)
-
-		c = blueprint.NewContainer(s1, blueprint.Coords{X: 36, Y: 36})
-		b.Push(c)
-
-		c = blueprint.NewContainer(s2, blueprint.Coords{X: 48, Y: 48})
-		b.Push(c)
-
-		return
-		c.Push(blueprint.NewContainer(s3, c.Dot()))
-		c.Push(blueprint.NewContainer(s4, c.Dot()))
-		c.Push(blueprint.NewContainer(s5, c.Dot()))
-		c.Push(blueprint.NewContainer(s3, c.Dot()))
-	}()
-
-	if err = b.Run(); err != nil {
+	a.b = blueprint.New("Test app", blueprint.Rects{Width: 640, Height: 480}, blueprint.NilColor)
+	if err = a.b.Run(a.Run); err != nil {
 		journaler.Error("Error initializing blueprint: %v", err)
 		os.Exit(1)
 	}
+}
+
+// App represents our app
+type App struct {
+	b *blueprint.Blueprint
+}
+
+// Run will run the app!
+func (a *App) Run() {
+	var c *blueprint.Container
+	c = blueprint.NewContainer(s1, blueprint.Coords{X: 12, Y: 12})
+	a.b.Push(c)
+
+	c = blueprint.NewContainer(s2, blueprint.Coords{X: 24, Y: 24})
+	a.b.Push(c)
+
+	c = blueprint.NewContainer(s1, blueprint.Coords{X: 36, Y: 36})
+	a.b.Push(c)
+
+	c = blueprint.NewContainer(s2, blueprint.Coords{X: 48, Y: 48})
+	a.b.Push(c)
+
+	c.Push(blueprint.NewContainer(s3, c.Dot()))
+	c.Push(blueprint.NewContainer(s4, c.Dot()))
+	c.Push(blueprint.NewContainer(s5, c.Dot()))
+	c.Push(blueprint.NewContainer(s3, c.Dot()))
+
+	c = blueprint.NewContainer(s1, blueprint.Coords{X: 60, Y: 60})
+	a.b.Push(c)
+	l := blueprint.NewLabel(c, "HELLO WORLD", s1, c.Dot(), fontRegular)
+	c.Push(l)
+	c.Push(blueprint.NewContainer(s3, c.Dot()))
 }
