@@ -1,21 +1,23 @@
 package blueprint
 
+// TODO: Make Containers thread-safe
+
 import (
+	"image/color"
+
+	"github.com/Path94/atoms"
 	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/pixelgl"
+	"github.com/missionMeteora/journaler"
 )
 
 // NewContainer will return a new container
 func NewContainer(style Style, coords Coords) *Container {
 	var c Container
-	b := Bounds{
-		p1: Coords{0, 0},
-		p2: Coords{style.r.Width, style.r.Height},
-	}
-
-	c.c = pixelgl.NewCanvas(b.PixelRect())
 	c.s = style
 	c.s.c = coords
+
+	c.e = NewEvents()
+	c.c = NewCanvas(c.s)
 
 	setUpdate()
 	return &c
@@ -23,11 +25,52 @@ func NewContainer(style Style, coords Coords) *Container {
 
 // Container is a standard content container
 type Container struct {
-	c *pixelgl.Canvas
+	mux atoms.RWMux
+	// Events embedded as the Container
+	e *Events
+	// Canvas represents the container in the visual form
+	c *Canvas
 	// Container style
 	s Style
 	// Child widgets
 	ws []Widget
+}
+
+func (c *Container) notify(evt Event) (has bool) {
+	evt.wp.X -= c.s.c.X
+	evt.wp.Y -= c.s.c.Y
+
+	journaler.Debug("Event: %v", evt.wp)
+	// TODO: Remove the need for this
+	topleft := Coords{
+		X: (c.s.r.Width / 2) + evt.wp.X,
+		Y: windowHeight() - ((c.s.r.Height / 2) + evt.wp.Y),
+	}
+
+	var dot Coords
+	dot.X = evt.wp.X
+	dot.Y += c.s.r.Height
+	dot.Y -= evt.wp.Y
+
+	for _, w := range c.ws {
+		journaler.Debug("Checking: %v %v %v %v", w.Coords(), w.Rects(), dot, isWithinBounds(dot, w))
+
+		if !isWithinBounds(topleft, w) {
+			continue
+		}
+
+		if c, ok := w.(*Container); ok {
+			if has = c.notify(evt); has {
+				return
+			}
+		} else {
+			if has = w.Events().notify(evt); has {
+				return
+			}
+		}
+	}
+
+	return c.e.notify(evt)
 }
 
 // Coords will return the container coords
@@ -50,6 +93,11 @@ func (c *Container) Margin() Margin {
 	return c.s.m
 }
 
+// Events will return the container events
+func (c *Container) Events() *Events {
+	return c.e
+}
+
 // Draw will draw the contents
 func (c *Container) Draw(tgt pixel.Target) {
 	// Clear as background color
@@ -60,12 +108,7 @@ func (c *Container) Draw(tgt pixel.Target) {
 		w.Draw(c.c)
 	}
 
-	topleft := Coords{
-		X: (c.s.r.Width / 2) + c.s.c.X,
-		Y: windowHeight() - ((c.s.r.Height / 2) + c.s.c.Y),
-	}
-
-	c.c.Draw(tgt, pixel.IM.Moved(topleft.Vec()))
+	c.c.Draw(tgt)
 }
 
 // Push will push a widget into the container
@@ -85,4 +128,13 @@ func (c *Container) Dot() (dot Coords) {
 	}
 
 	return
+}
+
+// SetBG will change the BG color
+func (c *Container) SetBG(bg color.Color) {
+	c.mux.Update(func() {
+		c.s.bg = bg
+	})
+
+	setUpdate()
 }

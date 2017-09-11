@@ -11,4 +11,6 @@ type Widget interface {
 	Padding() Padding
 	Margin() Margin
 	Draw(pixel.Target)
+
+	Events() *Events
 }

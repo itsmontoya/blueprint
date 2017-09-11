@@ -6,22 +6,32 @@ import (
 	"github.com/missionMeteora/journaler"
 )
 
+// TODO: Figure out why the hell this is needed to align properly
+const magicFontNumber = .74
+
 // NewLabel will return a new label
 func NewLabel(parent Widget, str string, s Style, c Coords, f *Font) *Label {
 	var l Label
 	l.str = str
 	l.s = s
 	l.s.c = c
-	l.s.r.Height = int64(f.size)
+	if sz := int64(f.size); l.s.r.Height < sz {
+		l.s.r.Height = sz
+	}
+
+	l.e = NewEvents()
+	l.c = NewCanvas(l.s)
 
 	atlas := text.NewAtlas(f.Face(), text.ASCII)
 	l.f = f
 
-	c.Y = parent.Rects().Height - l.s.r.Height
-	c.Y = parent.Rects().Height - int64(float64(l.s.r.Height)/1.14)
 	journaler.Debug("New label: %v %v", c, f.Size())
+	l.od = Coords{X: l.s.p.Left, Y: 0}
+	// Bring up cursor dot to vertical center (Note: dot indicates the BOTTOM of the chars)
+	l.od.Y = (l.s.r.Height / 2)
+	// Bring down the dot to compensate for font size
+	l.od.Y -= int64(f.size*magicFontNumber) / 2
 
-	l.od = c
 	l.t = text.New(l.od.Vec(), atlas)
 	l.t.Color = l.s.fg
 	l.refresh()
@@ -30,6 +40,9 @@ func NewLabel(parent Widget, str string, s Style, c Coords, f *Font) *Label {
 
 // Label is a label
 type Label struct {
+	e *Events
+	c *Canvas
+
 	f *Font
 	t *text.Text
 	// original dot
@@ -66,10 +79,20 @@ func (l *Label) Margin() Margin {
 	return l.s.m
 }
 
+// Events will return the label events
+func (l *Label) Events() *Events {
+	return l.e
+}
+
 // Draw will draw the contents
 func (l *Label) Draw(tgt pixel.Target) {
-	// Draw label
-	l.t.Draw(tgt, pixel.IM)
+	// Clear as background color
+	l.c.Clear(l.s.bg)
+
+	journaler.Debug("Drawing..")
+	// Draw label to canvas
+	l.t.Draw(l.c, pixel.IM)
+	l.c.Draw(tgt)
 }
 
 // Set will set a label value

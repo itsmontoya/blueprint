@@ -31,6 +31,8 @@ var (
 // New will return a new instance of Blueprint
 func New(title string, rects Rects, bg color.Color) *Blueprint {
 	var b Blueprint
+	b.out = journaler.New(title)
+
 	b.title = title
 	b.rects = rects
 	b.bg = bg
@@ -48,8 +50,10 @@ type Blueprint struct {
 	rects Rects
 
 	win *pixelgl.Window
-	ws  []Widget
-	bg  color.Color
+	out *journaler.Journaler
+
+	ws []Widget
+	bg color.Color
 	// Update state
 	update atoms.Bool
 	// Running wait group
@@ -89,20 +93,64 @@ func (b *Blueprint) Run(fn func()) (err error) {
 		go fn()
 
 		for !b.win.Closed() {
-			if b.win.JustPressed(pixelgl.MouseButton1) {
-				journaler.Debug("Click: %v", b.win.MousePosition())
-			}
+			b.mux.Update(func() {
+				b.checkMouseDown()
 
-			if b.update.Set(false) {
-				b.mux.Update(b.render)
-			}
+				if b.update.Set(false) {
+					b.render()
+				}
 
-			b.win.Update()
+				b.win.Update()
+			})
 		}
 	})
 
 	b.wg.Done()
 	return
+}
+
+func (b *Blueprint) checkMouseDown() {
+	if !b.win.JustPressed(pixelgl.MouseButton1) {
+		return
+	}
+
+	var evt Event
+	evt.et = EventMouseDown
+	evt.wp = newCoordsFromVec(b.win.MousePosition())
+	evt.wp.Y = windowHeight() - evt.wp.Y
+
+	for i := len(b.ws) - 1; i > -1; i-- {
+		w := b.ws[i]
+		if !isWithinBounds(evt.wp, w) {
+			continue
+		}
+
+		if c, ok := w.(*Container); ok {
+			if c.notify(evt) {
+				break
+			}
+		} else {
+			if w.Events().notify(evt) {
+				break
+			}
+		}
+
+		break
+	}
+}
+
+func isWithinBounds(pos Coords, w Widget) (within bool) {
+	c := w.Coords()
+	if pos.X < c.X || pos.Y < c.Y {
+		return
+	}
+
+	r := w.Rects()
+	if pos.X > c.X+r.Width || pos.Y > c.Y+r.Height {
+		return
+	}
+
+	return true
 }
 
 // Close will blue an instance of Blueprint

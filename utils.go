@@ -27,6 +27,12 @@ type Margin struct {
 	Left   int64
 }
 
+func newCoordsFromVec(vec pixel.Vec) (c Coords) {
+	c.X = int64(vec.X)
+	c.Y = int64(vec.Y)
+	return
+}
+
 // Coords represents coordinate values
 type Coords struct {
 	X int64

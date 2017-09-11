@@ -10,9 +10,11 @@ func TestBasic(t *testing.T) {
 		err error
 	)
 
-	if b, err = New("Test app", 640, 480, NilColor); err != nil {
+	if b = New("Test app", Rects{Width: 640, Height: 480}, NilColor); err != nil {
 		t.Fatal(err)
 	}
 
-	b.Run()
+	if err = b.Run(func() {}); err != nil {
+		t.Fatal(err)
+	}
 }
