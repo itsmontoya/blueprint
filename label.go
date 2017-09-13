@@ -1,16 +1,17 @@
 package blueprint
 
 import (
+	"image/color"
+
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/text"
-	"github.com/missionMeteora/journaler"
 )
 
 // TODO: Figure out why the hell this is needed to align properly
 const magicFontNumber = .74
 
 // NewLabel will return a new label
-func NewLabel(parent Widget, str string, s Style, c Coords, f *Font) *Label {
+func NewLabel(p Parent, str string, s Style, c Coords, f *Font) *Label {
 	var l Label
 	l.str = str
 	l.s = s
@@ -20,12 +21,11 @@ func NewLabel(parent Widget, str string, s Style, c Coords, f *Font) *Label {
 	}
 
 	l.e = NewEvents()
-	l.c = NewCanvas(l.s)
+	l.c = NewCanvas(p.Rects().Height, l.s)
 
 	atlas := text.NewAtlas(f.Face(), text.ASCII)
 	l.f = f
 
-	journaler.Debug("New label: %v %v", c, f.Size())
 	l.od = Coords{X: l.s.p.Left, Y: 0}
 	// Bring up cursor dot to vertical center (Note: dot indicates the BOTTOM of the chars)
 	l.od.Y = (l.s.r.Height / 2)
@@ -56,6 +56,12 @@ func (l *Label) refresh() {
 	l.t.Clear()
 	l.t.Dot = l.od.Vec()
 	l.t.WriteString(l.str)
+
+	// Clear as background color
+	l.c.Clear(l.s.bg)
+	// Draw label to canvas
+	l.t.Draw(l.c, pixel.IM)
+
 	setUpdate()
 }
 
@@ -86,12 +92,6 @@ func (l *Label) Events() *Events {
 
 // Draw will draw the contents
 func (l *Label) Draw(tgt pixel.Target) {
-	// Clear as background color
-	l.c.Clear(l.s.bg)
-
-	journaler.Debug("Drawing..")
-	// Draw label to canvas
-	l.t.Draw(l.c, pixel.IM)
 	l.c.Draw(tgt)
 }
 
@@ -99,4 +99,11 @@ func (l *Label) Draw(tgt pixel.Target) {
 func (l *Label) Set(str string) {
 	l.str = str
 	l.refresh()
+}
+
+// SetBG will set the background color
+func (l *Label) SetBG(bg color.Color) {
+	l.s.bg = bg
+	l.refresh()
+
 }

@@ -6,7 +6,7 @@ import (
 )
 
 // NewCanvas will return a new Canvas
-func NewCanvas(s Style) *Canvas {
+func NewCanvas(parentHeight int64, s Style) *Canvas {
 	var c Canvas
 	b := Bounds{
 		p1: Coords{0, 0},
@@ -17,7 +17,8 @@ func NewCanvas(s Style) *Canvas {
 
 	topleft := Coords{
 		X: (s.r.Width / 2) + s.c.X,
-		Y: windowHeight() - ((s.r.Height / 2) + s.c.Y),
+		Y: parentHeight - ((s.r.Height / 2) + s.c.Y),
+		//Y: windowHeight() - ((s.r.Height / 2) + s.c.Y),
 	}
 
 	c.m = pixel.IM.Moved(topleft.Vec())

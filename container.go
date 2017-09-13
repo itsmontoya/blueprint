@@ -7,20 +7,27 @@ import (
 
 	"github.com/Path94/atoms"
 	"github.com/faiface/pixel"
-	"github.com/missionMeteora/journaler"
 )
 
+const (
+	matchNone uint8 = iota
+	matchOK
+	matchBreak
+)
+
+var nilWidget Widget
+
 // NewContainer will return a new container
-func NewContainer(style Style, coords Coords) *Container {
-	var c Container
-	c.s = style
-	c.s.c = coords
+func NewContainer(p Parent, s Style, c Coords) *Container {
+	var cnt Container
+	cnt.s = s
+	cnt.s.c = c
 
-	c.e = NewEvents()
-	c.c = NewCanvas(c.s)
-
+	cnt.e = NewEvents()
+	cnt.c = NewCanvas(p.Rects().Height, cnt.s)
+	cnt.hovering = nilWidget
 	setUpdate()
-	return &c
+	return &cnt
 }
 
 // Container is a standard content container
@@ -32,45 +39,89 @@ type Container struct {
 	c *Canvas
 	// Container style
 	s Style
+
+	hovering Widget
+
 	// Child widgets
 	ws []Widget
 }
 
-func (c *Container) notify(evt Event) (has bool) {
-	evt.wp.X -= c.s.c.X
-	evt.wp.Y -= c.s.c.Y
-
-	journaler.Debug("Event: %v", evt.wp)
-	// TODO: Remove the need for this
-	topleft := Coords{
-		X: (c.s.r.Width / 2) + evt.wp.X,
-		Y: windowHeight() - ((c.s.r.Height / 2) + evt.wp.Y),
+func (c *Container) handleMouseEnter(evt Event, w Widget) (has bool) {
+	if c.hovering != w {
+		c.handleMouseLeave(evt)
 	}
 
-	var dot Coords
-	dot.X = evt.wp.X
-	dot.Y += c.s.r.Height
-	dot.Y -= evt.wp.Y
+	if cc, ok := w.(*Container); ok {
+		has = cc.notify(evt)
+	} else if w != c.hovering {
+		has = w.Events().notify(evt)
+	}
+
+	c.hovering = w
+	return
+}
+
+func (c *Container) handleMouseLeave(evt Event) (has bool) {
+	if c.hovering == nil {
+		return
+	}
+
+	evt.et = EventMouseLeave
+	if hc, ok := c.hovering.(*Container); ok {
+		has = hc.notify(evt)
+	} else {
+		has = c.hovering.Events().notify(evt)
+	}
+
+	c.hovering = nil
+	return
+}
+
+func (c *Container) handleMouseDown(evt Event, w Widget) (has bool) {
+	if cc, ok := w.(*Container); ok {
+		return cc.notify(evt)
+	}
+
+	if c.hovering != w {
+		return w.Events().notify(evt)
+	}
+
+	return
+}
+
+func (c *Container) notify(evt Event) (has bool) {
+	evt.rp.X = evt.wp.X - c.s.c.X
+	evt.rp.Y = evt.wp.Y - c.s.c.Y
+
+	switch evt.et {
+	case EventMouseLeave:
+		// No need to iterate through widgets if out container isn't even selected!
+		c.handleMouseLeave(evt)
+	}
 
 	for _, w := range c.ws {
-		journaler.Debug("Checking: %v %v %v %v", w.Coords(), w.Rects(), dot, isWithinBounds(dot, w))
-
-		if !isWithinBounds(topleft, w) {
+		if !isWithinBounds(evt.rp, w) {
 			continue
 		}
 
-		if c, ok := w.(*Container); ok {
-			if has = c.notify(evt); has {
-				return
-			}
-		} else {
-			if has = w.Events().notify(evt); has {
-				return
-			}
+		has = true
+
+		switch evt.et {
+		case EventMouseEnter:
+			c.handleMouseEnter(evt, w)
+		case EventMouseDown:
+			c.handleMouseDown(evt, w)
 		}
+
+		return
 	}
 
-	return c.e.notify(evt)
+	switch evt.et {
+	case EventMouseEnter:
+		c.handleMouseLeave(evt)
+	}
+
+	return
 }
 
 // Coords will return the container coords
@@ -119,9 +170,8 @@ func (c *Container) Push(w Widget) {
 
 // Dot will return the next dot
 func (c *Container) Dot() (dot Coords) {
-	dot.X += c.s.p.Left
-	dot.Y += windowHeight() - c.s.r.Height
-	dot.Y += c.s.p.Top
+	dot.X = c.s.p.Left
+	dot.Y = c.s.p.Top
 
 	for _, w := range c.ws {
 		dot.Y += w.Rects().Height

@@ -15,12 +15,10 @@ func TestEvents(t *testing.T) {
 
 	evts = NewEvents()
 	evts.Subscribe(EventMouseDown, func(evt Event) {
-		journaler.Debug("Event! %v", evt)
 		ch <- 2
 	})
 
 	evts.Subscribe(EventMouseDown, func(evt Event) {
-		journaler.Debug("Event! %v", evt)
 		ch <- 1
 	})
 

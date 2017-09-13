@@ -44,12 +44,13 @@ func NewEvents() *Events {
 type Events struct {
 	mux atoms.RWMux
 
+	mouseEntered bool
 	onMouseEnter *eventMap
 	onMouseLeave *eventMap
+	onMouseUp    *eventMap
+	onMouseDown  *eventMap
 
-	onMouseDown *eventMap
-	onMouseUp   *eventMap
-
+	focused bool
 	onFocus *eventMap
 	onBlur  *eventMap
 }
@@ -64,39 +65,39 @@ func (e *Events) get(et EventType, create bool) (em *eventMap, err error) {
 		em = e.onMouseEnter
 
 	case EventMouseLeave:
-		if e.onMouseEnter == nil && create {
-			e.onMouseEnter = newEventMap()
+		if e.onMouseLeave == nil && create {
+			e.onMouseLeave = newEventMap()
 		}
 
-		em = e.onMouseEnter
+		em = e.onMouseLeave
 
 	case EventMouseDown:
-		if e.onMouseEnter == nil && create {
-			e.onMouseEnter = newEventMap()
+		if e.onMouseDown == nil && create {
+			e.onMouseDown = newEventMap()
 		}
 
-		em = e.onMouseEnter
+		em = e.onMouseDown
 
 	case EventMouseUp:
-		if e.onMouseEnter == nil && create {
-			e.onMouseEnter = newEventMap()
+		if e.onMouseUp == nil && create {
+			e.onMouseUp = newEventMap()
 		}
 
-		em = e.onMouseEnter
+		em = e.onMouseUp
 
 	case EventOnFocus:
-		if e.onMouseEnter == nil && create {
-			e.onMouseEnter = newEventMap()
+		if e.onFocus == nil && create {
+			e.onFocus = newEventMap()
 		}
 
-		em = e.onMouseEnter
+		em = e.onFocus
 
 	case EventOnBlur:
-		if e.onMouseEnter == nil && create {
-			e.onMouseEnter = newEventMap()
+		if e.onBlur == nil && create {
+			e.onBlur = newEventMap()
 		}
 
-		em = e.onMouseEnter
+		em = e.onBlur
 
 	default:
 		err = ErrInvalidEvent
@@ -167,6 +168,8 @@ type Event struct {
 	et EventType
 	// Window position
 	wp Coords
+	// Relative position
+	rp Coords
 }
 
 // EventFn is used as a callback for listening events

@@ -54,6 +54,9 @@ type Blueprint struct {
 
 	ws []Widget
 	bg color.Color
+
+	hovering Widget
+
 	// Update state
 	update atoms.Bool
 	// Running wait group
@@ -94,6 +97,7 @@ func (b *Blueprint) Run(fn func()) (err error) {
 
 		for !b.win.Closed() {
 			b.mux.Update(func() {
+				b.checkHovering()
 				b.checkMouseDown()
 
 				if b.update.Set(false) {
@@ -107,6 +111,66 @@ func (b *Blueprint) Run(fn func()) (err error) {
 
 	b.wg.Done()
 	return
+}
+
+// Rects will return the Blueprint rects
+func (b *Blueprint) Rects() (r Rects) {
+	b.mux.Read(func() {
+		r = b.rects
+	})
+
+	return
+}
+
+func (b *Blueprint) handleMouseLeave(evt Event) {
+	if b.hovering == nil {
+		return
+	}
+
+	if c, ok := b.hovering.(*Container); ok {
+		c.notify(evt)
+	}
+
+	b.hovering.Events().notify(evt)
+	b.hovering = nil
+}
+
+func (b *Blueprint) checkHovering() {
+	var enter Event
+	enter.et = EventMouseEnter
+	enter.wp = newCoordsFromVec(b.win.MousePosition())
+	enter.wp.Y = windowHeight() - enter.wp.Y
+
+	leave := enter
+	leave.et = EventMouseLeave
+
+	for i := len(b.ws) - 1; i > -1; i-- {
+		w := b.ws[i]
+		if !isWithinBounds(enter.wp, w) {
+			continue
+		}
+
+		updating := w != b.hovering
+		if updating {
+			b.handleMouseLeave(leave)
+		}
+
+		// We notify containers on every instance of hover so a check can be made for it's children
+		if c, ok := w.(*Container); ok {
+			c.notify(enter)
+		}
+
+		if updating {
+			// We notify direct widgets once on hover
+			w.Events().notify(enter)
+		}
+
+		b.hovering = w
+		return
+	}
+
+	// If we made it to the end, we have no matches
+	b.handleMouseLeave(leave)
 }
 
 func (b *Blueprint) checkMouseDown() {

@@ -62,16 +62,42 @@ type App struct {
 
 // Run will run the app!
 func (a *App) Run() {
-	c := blueprint.NewContainer(s1, blueprint.Coords{X: 60, Y: 60})
-	a.b.Push(c)
+	c := blueprint.NewContainer(a.b, s1, blueprint.Coords{X: 12, Y: 12})
 	l := blueprint.NewLabel(c, "Hello World.", s6, c.Dot(), fontRegular)
 	c.Push(l)
+
+	redBox := blueprint.NewContainer(c, s3, c.Dot())
+	c.Push(redBox)
+
+	l2 := blueprint.NewLabel(c, "Oh, hai!", s6, c.Dot(), fontRegular)
+	c.Push(l2)
+
+	a.b.Push(c)
+
+	c.Events().Subscribe(blueprint.EventMouseEnter, func(evt blueprint.Event) {
+		journaler.Success("Enter container")
+	})
+
+	c.Events().Subscribe(blueprint.EventMouseLeave, func(evt blueprint.Event) {
+		journaler.Error("Leave container")
+	})
+
 	c.Events().Subscribe(blueprint.EventMouseDown, func(evt blueprint.Event) {
 		journaler.Success("Oh hai.")
 	})
 
 	l.Events().Subscribe(blueprint.EventMouseDown, func(evt blueprint.Event) {
 		journaler.Success("Headah!")
+	})
+
+	l.Events().Subscribe(blueprint.EventMouseEnter, func(evt blueprint.Event) {
+		journaler.Success("Enter header")
+		l.SetBG(greenC)
+	})
+
+	l.Events().Subscribe(blueprint.EventMouseLeave, func(evt blueprint.Event) {
+		journaler.Error("Leave header")
+		l.SetBG(grayC)
 	})
 	/*
 		go func() {

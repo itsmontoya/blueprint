@@ -3,7 +3,10 @@ package blueprint
 import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/missionMeteora/journaler"
 )
+
+var out = journaler.New("Blueprint")
 
 // Rects represents rect values
 type Rects struct {
@@ -65,4 +68,9 @@ func getCfg(title string, w, h int64) (cfg pixelgl.WindowConfig) {
 	cfg.Bounds = pixel.R(0, 0, float64(w), float64(h))
 	cfg.VSync = true
 	return
+}
+
+// Parent is the parent interface
+type Parent interface {
+	Rects() Rects
 }
