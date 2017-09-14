@@ -23,16 +23,19 @@ func NewContainer(p Parent, s Style, c Coords) *Container {
 	cnt.s = s
 	cnt.s.c = c
 
+	cnt.p = p
 	cnt.e = NewEvents()
 	cnt.c = NewCanvas(p.Rects().Height, cnt.s)
 	cnt.hovering = nilWidget
-	setUpdate()
+	cnt.SetToUpdate()
 	return &cnt
 }
 
 // Container is a standard content container
 type Container struct {
 	mux atoms.RWMux
+	// Container parent
+	p Parent
 	// Events embedded as the Container
 	e *Events
 	// Canvas represents the container in the visual form
@@ -82,11 +85,7 @@ func (c *Container) handleMouseDown(evt Event, w Widget) (has bool) {
 		return cc.notify(evt)
 	}
 
-	if c.hovering != w {
-		return w.Events().notify(evt)
-	}
-
-	return
+	return w.Events().notify(evt)
 }
 
 func (c *Container) notify(evt Event) (has bool) {
@@ -149,8 +148,7 @@ func (c *Container) Events() *Events {
 	return c.e
 }
 
-// Draw will draw the contents
-func (c *Container) Draw(tgt pixel.Target) {
+func (c *Container) refresh() {
 	// Clear as background color
 	c.c.Clear(c.s.bg)
 
@@ -158,14 +156,17 @@ func (c *Container) Draw(tgt pixel.Target) {
 	for _, w := range c.ws {
 		w.Draw(c.c)
 	}
+}
 
+// Draw will draw the contents
+func (c *Container) Draw(tgt pixel.Target) {
 	c.c.Draw(tgt)
 }
 
 // Push will push a widget into the container
-func (c *Container) Push(w Widget) {
-	c.ws = append(c.ws, w)
-	setUpdate()
+func (c *Container) Push(ws ...Widget) {
+	c.ws = append(c.ws, ws...)
+	c.SetToUpdate()
 }
 
 // Dot will return the next dot
@@ -186,5 +187,11 @@ func (c *Container) SetBG(bg color.Color) {
 		c.s.bg = bg
 	})
 
-	setUpdate()
+	c.SetToUpdate()
+}
+
+// SetToUpdate will redraw the container (and it's children) and signal the renderer for an repaint
+func (c *Container) SetToUpdate() {
+	c.refresh()
+	c.p.SetToUpdate()
 }

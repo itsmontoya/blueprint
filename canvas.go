@@ -12,13 +12,14 @@ func NewCanvas(parentHeight int64, s Style) *Canvas {
 		p1: Coords{0, 0},
 		p2: Coords{s.r.Width, s.r.Height},
 	}
-
+	out.Debug("New canvas: %v %v", parentHeight, s)
 	c.Canvas = pixelgl.NewCanvas(b.PixelRect())
+
+	out.Debug("Canvas made")
 
 	topleft := Coords{
 		X: (s.r.Width / 2) + s.c.X,
 		Y: parentHeight - ((s.r.Height / 2) + s.c.Y),
-		//Y: windowHeight() - ((s.r.Height / 2) + s.c.Y),
 	}
 
 	c.m = pixel.IM.Moved(topleft.Vec())

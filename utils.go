@@ -73,4 +73,5 @@ func getCfg(title string, w, h int64) (cfg pixelgl.WindowConfig) {
 // Parent is the parent interface
 type Parent interface {
 	Rects() Rects
+	SetToUpdate()
 }

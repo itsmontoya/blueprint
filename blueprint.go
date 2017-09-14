@@ -32,11 +32,10 @@ var (
 func New(title string, rects Rects, bg color.Color) *Blueprint {
 	var b Blueprint
 	b.out = journaler.New(title)
-
 	b.title = title
 	b.rects = rects
 	b.bg = bg
-	b.setUpdate()
+	b.SetToUpdate()
 
 	_b = &b
 	return &b
@@ -65,10 +64,6 @@ type Blueprint struct {
 	closed atoms.Bool
 }
 
-func (b *Blueprint) setUpdate() {
-	b.update.Set(true)
-}
-
 func (b *Blueprint) render() {
 	b.win.Clear(b.bg)
 	for _, w := range b.ws {
@@ -77,10 +72,10 @@ func (b *Blueprint) render() {
 }
 
 // Push will push a widget onto the Blueprint
-func (b *Blueprint) Push(w Widget) {
+func (b *Blueprint) Push(ws ...Widget) {
 	b.mux.Update(func() {
-		b.ws = append(b.ws, w)
-		b.setUpdate()
+		b.ws = append(b.ws, ws...)
+		b.SetToUpdate()
 	})
 }
 
@@ -120,6 +115,11 @@ func (b *Blueprint) Rects() (r Rects) {
 	})
 
 	return
+}
+
+// SetToUpdate will set the internal state to re-render
+func (b *Blueprint) SetToUpdate() {
+	b.update.Set(true)
 }
 
 func (b *Blueprint) handleMouseLeave(evt Event) {
@@ -226,14 +226,6 @@ func (b *Blueprint) Close() (err error) {
 	b.win.SetClosed(true)
 	b.wg.Wait()
 	return
-}
-
-func setUpdate() {
-	if _b == nil {
-		return
-	}
-
-	_b.setUpdate()
 }
 
 func windowWidth() int64 {

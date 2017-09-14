@@ -1,6 +1,7 @@
 package blueprint
 
 import (
+	"github.com/missionMeteora/journaler"
 	"image/color"
 
 	"github.com/faiface/pixel"
@@ -20,9 +21,13 @@ func NewLabel(p Parent, str string, s Style, c Coords, f *Font) *Label {
 		l.s.r.Height = sz
 	}
 
+	journaler.Debug("Okay. %v", l.s.r)
+	l.p = p
 	l.e = NewEvents()
+	journaler.Debug("Events")
 	l.c = NewCanvas(p.Rects().Height, l.s)
 
+	journaler.Debug("Canvas")
 	atlas := text.NewAtlas(f.Face(), text.ASCII)
 	l.f = f
 
@@ -40,6 +45,7 @@ func NewLabel(p Parent, str string, s Style, c Coords, f *Font) *Label {
 
 // Label is a label
 type Label struct {
+	p Parent
 	e *Events
 	c *Canvas
 
@@ -61,8 +67,8 @@ func (l *Label) refresh() {
 	l.c.Clear(l.s.bg)
 	// Draw label to canvas
 	l.t.Draw(l.c, pixel.IM)
-
-	setUpdate()
+	// Call SetToUpdate of parent
+	l.p.SetToUpdate()
 }
 
 // Coords will return the label coords
@@ -106,4 +112,17 @@ func (l *Label) SetBG(bg color.Color) {
 	l.s.bg = bg
 	l.refresh()
 
+}
+
+// SetFG will set the foreground color
+func (l *Label) SetFG(fg color.Color) {
+	l.s.fg = fg
+	l.t.Color = l.s.fg
+	l.refresh()
+
+}
+
+// SetToUpdate will set a label to be updated
+func (l *Label) SetToUpdate() {
+	l.refresh()
 }
